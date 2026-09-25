@@ -27,17 +27,7 @@ export const MOCK_PROS: MockPro[] = [
     rateHint: 'Desde $80.000',
   },
   {
-    id: 'p2',
-    name: 'Ana Lucía Mejía',
-    oficios: ['aseo'],
-    barrio: 'san-antonio',
-    local: true,
-    rating: 4.9,
-    jobsCount: 41,
-    bio: 'Aseo profundo y mantenimiento de apartamentos.',
-    rateHint: 'Desde $60.000',
-  },
-  {
+    // Above-fold "poco visto" for Descubre fairness proof (Designer P0 nit)
     id: 'p3',
     name: 'Diego Quintero',
     oficios: ['electricidad'],
@@ -48,6 +38,17 @@ export const MOCK_PROS: MockPro[] = [
     jobsCount: 7,
     bio: 'Tableros, tomas, iluminación LED.',
     rateHint: 'Desde $90.000',
+  },
+  {
+    id: 'p2',
+    name: 'Ana Lucía Mejía',
+    oficios: ['aseo'],
+    barrio: 'san-antonio',
+    local: true,
+    rating: 4.9,
+    jobsCount: 41,
+    bio: 'Aseo profundo y mantenimiento de apartamentos.',
+    rateHint: 'Desde $60.000',
   },
   {
     id: 'p4',

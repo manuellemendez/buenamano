@@ -9,7 +9,7 @@
  * - No service role in the app — session Authorization via supabase.ts.
  */
 
-import { supabase, isSupabaseConfigured } from './supabase';
+import { getSupabase, isSupabaseConfigured } from './supabase';
 
 export type EdgeName =
   | 'accept_quote'
@@ -81,7 +81,8 @@ export type DescubreFeedResult = {
 };
 
 async function requireAuthedClient() {
-  if (!isSupabaseConfigured || !supabase) {
+  const client = getSupabase();
+  if (!isSupabaseConfigured || !client) {
     throw new ApiError(
       'Supabase no configurado. Revisa EXPO_PUBLIC_SUPABASE_URL y ANON_KEY.',
       'not_configured',
@@ -89,11 +90,11 @@ async function requireAuthedClient() {
   }
   const {
     data: { session },
-  } = await supabase.auth.getSession();
+  } = await client.auth.getSession();
   if (!session?.access_token) {
     throw new ApiError('Debes iniciar sesión para continuar.', 'not_signed_in');
   }
-  return supabase;
+  return client;
 }
 
 /** Low-level Edge invoke with user session. */

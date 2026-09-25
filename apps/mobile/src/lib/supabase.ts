@@ -13,10 +13,36 @@ const anonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ?? '';
 
 export const isSupabaseConfigured = Boolean(url && anonKey);
 
-/** Null when env placeholders are missing — app must still boot. */
-export const supabase: SupabaseClient | null = isSupabaseConfigured
-  ? createClient(url, anonKey)
-  : null;
+let cached: SupabaseClient | null | undefined;
+
+/**
+ * Expo web SSR evaluates modules in Node (no native WebSocket).
+ * Eager createClient at import time crashes Metro; defer until browser / native.
+ */
+function isSafeToCreateClient(): boolean {
+  if (typeof window !== 'undefined') return true;
+  const nodeVersion =
+    typeof process !== 'undefined' &&
+    typeof (process as { versions?: { node?: string } }).versions?.node === 'string';
+  // Hermes / JSC: no window, but also no process.versions.node → allow create.
+  return !nodeVersion;
+}
+
+/** Lazy client — null when env missing or during Node SSR (Expo web). */
+export function getSupabase(): SupabaseClient | null {
+  if (!isSupabaseConfigured) return null;
+  if (!isSafeToCreateClient()) return null;
+  if (cached === undefined) {
+    cached = createClient(url, anonKey, {
+      auth: {
+        persistSession: true,
+        autoRefreshToken: true,
+        detectSessionInUrl: typeof window !== 'undefined',
+      },
+    });
+  }
+  return cached;
+}
 
 export function getSupabaseStatus(): 'ready' | 'not_configured' {
   return isSupabaseConfigured ? 'ready' : 'not_configured';

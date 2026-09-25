@@ -26,7 +26,7 @@ Copy `.env.example` → `.env`. App **boots without keys**.
 | `EXPO_PUBLIC_SUPABASE_ANON_KEY` | No | Placeholder OK |
 | Sentry / Maps / EAS | No | Documented for later |
 
-If missing, `src/lib/supabase.ts` stays `null` and UI shows “not configured”.
+If missing, `getSupabase()` returns `null` and UI shows “not configured”. Client creation is lazy (skipped during Expo web Node SSR — no native WebSocket).
 
 ## Ready vs stubbed
 

@@ -4,6 +4,7 @@
  * Rules:
  * - Contacts: ONLY rpc('get_job_participant_contacts') — never SELECT job_participant_contacts view.
  * - Hire / confirm / admin / Local mutations ONLY via Edge functions.invoke.
+ * - Admin reports: list via rpc('list_admin_reports'); triage via Edge admin_triage_report — never client UPDATE reports.
  * - NEVER client-update jobs.status to confirmed / cancelled / disputed.
  * - Pro MAY client-update job active → pro_done only (that transition alone).
  * - No service role in the app — session Authorization via supabase.ts.
@@ -25,7 +26,8 @@ export type EdgeName =
   | 'recompute_local'
   | 'descubre_feed'
   | 'admin_hide'
-  | 'admin_ban';
+  | 'admin_ban'
+  | 'admin_triage_report';
 
 export type ApiErrorCode =
   | 'not_configured'
@@ -162,6 +164,13 @@ export function adminHide(proId: string, hidden = true) {
 
 export function adminBan(userId: string, ban = true) {
   return invokeEdge('admin_ban', { user_id: userId, ban });
+}
+
+export type ReportTriageStatus = 'open' | 'triaged' | 'closed';
+
+/** Admin-only triage — Edge only; never client UPDATE reports. */
+export function adminTriageReport(reportId: string, status: ReportTriageStatus) {
+  return invokeEdge('admin_triage_report', { report_id: reportId, status });
 }
 
 /**
@@ -576,6 +585,7 @@ export async function submitReport(input: SubmitReportInput): Promise<{ id: stri
 
 export type ReportRow = {
   id: string;
+  reporter_id?: string;
   reason: string;
   target_type: string;
   target_id: string;
@@ -583,21 +593,32 @@ export type ReportRow = {
   created_at: string;
 };
 
-/** Own reports only — admin queue blocked by RLS (no admin SELECT). */
-export async function listOwnReports(): Promise<{
-  rows: ReportRow[];
-  adminBlocked: boolean;
-}> {
-  try {
-    const { client } = await requireUid();
-    const { data, error } = await client
-      .from('reports')
-      .select('id, reason, target_type, target_id, status, created_at')
-      .order('created_at', { ascending: false })
-      .limit(50);
-    if (error) return { rows: [], adminBlocked: true };
-    return { rows: (data ?? []) as ReportRow[], adminBlocked: true };
-  } catch {
-    return { rows: [], adminBlocked: true };
+/** Reporter: own rows only (RLS select_own). */
+export async function listOwnReports(): Promise<ReportRow[]> {
+  const { client } = await requireUid();
+  const { data, error } = await client
+    .from('reports')
+    .select('id, reporter_id, reason, target_type, target_id, status, created_at')
+    .order('created_at', { ascending: false })
+    .limit(50);
+  if (error) throw new ApiError(error.message, 'rpc_error');
+  return (data ?? []) as ReportRow[];
+}
+
+/** Admin queue via SECURITY DEFINER RPC — admin JWT only. */
+export async function listAdminReports(opts?: {
+  status?: string | null;
+  limit?: number;
+  offset?: number;
+}): Promise<ReportRow[]> {
+  const client = await requireAuthedClient();
+  const { data, error } = await client.rpc('list_admin_reports', {
+    p_status: opts?.status ?? null,
+    p_limit: opts?.limit ?? 50,
+    p_offset: opts?.offset ?? 0,
+  });
+  if (error) {
+    throw new ApiError(error.message || 'No se pudo cargar la cola de reportes', 'rpc_error');
   }
+  return (data ?? []) as ReportRow[];
 }

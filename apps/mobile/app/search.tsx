@@ -56,7 +56,7 @@ export default function SearchFilters() {
           accessibilityLabel="Solo Local"
         />
       </View>
-      <Text style={styles.count}>{filtered.length} resultados</Text>
+      <Text style={styles.count}>{filtered.length} resultado{filtered.length === 1 ? '' : 's'}</Text>
       {filtered.length === 0 ? (
         <EmptyState
           title="Sin resultados"

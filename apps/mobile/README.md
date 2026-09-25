@@ -83,7 +83,7 @@ If missing, `getSupabase()` returns `null` and UI shows “not configured”. Cl
 ## Pack / design source
 
 `/workspace/local-proof-services/` — `DESIGN-SYSTEM.md`, `PLAN.md`, `CEO-BRIEF.md`, `STATUS.md`  
-Repo ship list: `/workspace/deaca/SHIP-LIST-P0.md`
+Repo ship list: `../../SHIP-LIST-P0.md (repo root)`
 
 ## Do not invent
 
@@ -95,7 +95,7 @@ Wompi, chat product, multi-city, restaurants, Patrocinado/boost SKUs.
 - `/workspace/local-proof-services/PLAN.md`
 - `/workspace/local-proof-services/STATUS.md`
 - `/workspace/local-proof-services/CEO-BRIEF.md`
-- `/workspace/deaca/SHIP-LIST-P0.md`
+- `../../SHIP-LIST-P0.md (repo root)`
 
 ## Security gate (CEO / Security 2026-09-24)
 

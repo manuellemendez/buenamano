@@ -90,3 +90,11 @@ Wompi, chat product, multi-city, restaurants, Patrocinado/boost SKUs.
 - `/workspace/local-proof-services/STATUS.md`
 - `/workspace/local-proof-services/CEO-BRIEF.md`
 - `/workspace/deaca/SHIP-LIST-P0.md`
+
+## Security gate (CEO / Security 2026-09-24)
+
+Live Supabase keys (`EXPO_PUBLIC_*`) are OK for **auth + read scaffolding only**.
+
+Do **not** wire client mutations for hire / accept quote / confirm job / admin / Local proof approve until Back-end lands Security’s three P0s. Keep those flows on mocks (`Alert` / local state).
+
+Never put the service role key in the app.

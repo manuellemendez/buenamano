@@ -42,7 +42,7 @@ export function ProofUploader({
         <Text style={styles.check}>{slots >= 3 ? '☑' : '☐'} (Alt.) dos vouchers de vecinos</Text>
       </View>
       {slots > 0 ? (
-        <View style={styles.thumbs} accessibilityLabel={`${slots} fotos listas`}>
+        <View style={styles.thumbs} accessibilityLabel={`${slots} foto${slots === 1 ? '' : 's'} lista${slots === 1 ? '' : 's'}`}>
           {Array.from({ length: slots }, (_, i) => (
             <View
               key={i}
@@ -54,7 +54,7 @@ export function ProofUploader({
         </View>
       ) : null}
       <Button
-        label={slots === 0 ? 'Agregar foto (stub)' : `Agregar otra · ${slots} listas`}
+        label={slots === 0 ? 'Agregar foto (stub)' : `Agregar otra · ${slots} lista${slots === 1 ? '' : 's'}`}
         variant="secondary"
         onPress={() => setSlots((n) => n + 1)}
         fullWidth

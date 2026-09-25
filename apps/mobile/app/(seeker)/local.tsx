@@ -24,7 +24,7 @@ export default function LocalTabSeeker() {
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.surface },
-  content: { padding: spacing[4], gap: spacing[3] },
+  content: { padding: spacing[4], gap: spacing[3], paddingBottom: spacing[7] },
   title: { ...typography.title1, color: colors.text },
   body: { ...typography.body, color: colors.textMuted },
 });

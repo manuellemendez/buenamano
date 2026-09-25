@@ -2,6 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Tabs } from 'expo-router';
 import type { ComponentProps } from 'react';
 import type { ColorValue } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors } from '../../src/theme/tokens';
 
 type IconName = ComponentProps<typeof Ionicons>['name'];
@@ -13,14 +14,23 @@ function tabIcon(outline: IconName, filled: IconName) {
 }
 
 export default function SeekerTabs() {
+  const insets = useSafeAreaInsets();
+  const bottomPad = Math.max(insets.bottom, 8);
+
   return (
     <Tabs
       screenOptions={{
         headerStyle: { backgroundColor: colors.surface },
         headerTintColor: colors.text,
+        headerTitleStyle: { fontWeight: '700', fontSize: 24, color: colors.text },
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.textMuted,
-        tabBarStyle: { backgroundColor: colors.surfaceCard, borderTopColor: colors.border },
+        tabBarStyle: {
+          backgroundColor: colors.surfaceCard,
+          borderTopColor: colors.border,
+          paddingBottom: bottomPad,
+          height: 49 + bottomPad,
+        },
         tabBarLabelStyle: { fontSize: 11 },
       }}
     >

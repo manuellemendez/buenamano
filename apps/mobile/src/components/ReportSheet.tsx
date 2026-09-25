@@ -29,18 +29,25 @@ export function ReportSheet({ visible, onClose, onSubmit }: Props) {
         <Pressable style={styles.sheet} onPress={(e) => e.stopPropagation()}>
           <Text style={styles.title}>Reportar</Text>
           <Text style={styles.sub}>Cuéntanos qué pasó. Revisamos en &lt;24h en smoke.</Text>
-          <View style={styles.reasons}>
-            {REPORT_REASONS.map((r) => (
-              <Pressable
-                key={r.id}
-                onPress={() => setReasonId(r.id)}
-                style={[styles.reason, reasonId === r.id && styles.reasonOn]}
-              >
-                <Text style={[styles.reasonText, reasonId === r.id && styles.reasonTextOn]}>
-                  {r.label}
-                </Text>
-              </Pressable>
-            ))}
+          <View style={styles.reasons} accessibilityRole="radiogroup">
+            {REPORT_REASONS.map((r) => {
+              const on = reasonId === r.id;
+              return (
+                <Pressable
+                  key={r.id}
+                  onPress={() => setReasonId(r.id)}
+                  style={[styles.reasonRow, on && styles.reasonRowOn]}
+                  accessibilityRole="radio"
+                  accessibilityState={{ selected: on }}
+                  accessibilityLabel={r.label}
+                >
+                  <View style={[styles.radio, on && styles.radioOn]}>
+                    {on ? <View style={styles.radioDot} /> : null}
+                  </View>
+                  <Text style={[styles.reasonText, on && styles.reasonTextOn]}>{r.label}</Text>
+                </Pressable>
+              );
+            })}
           </View>
           <TextArea
             label="Detalle (opcional)"
@@ -73,16 +80,36 @@ const styles = StyleSheet.create({
   title: { ...typography.title1, color: colors.text },
   sub: { ...typography.caption, color: colors.textMuted },
   reasons: { gap: spacing[2] },
-  reason: {
-    padding: spacing[3],
-    borderRadius: radius.sm,
+  reasonRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing[3],
+    paddingVertical: spacing[3],
+    paddingHorizontal: spacing[3],
+    borderRadius: radius.md,
     borderWidth: 1,
     borderColor: colors.border,
     backgroundColor: colors.surfaceMuted,
-    minHeight: 44,
+    minHeight: 48,
+    width: '100%',
+  },
+  reasonRowOn: { borderColor: colors.danger, backgroundColor: '#FCE8E7' },
+  radio: {
+    width: 22,
+    height: 22,
+    borderRadius: radius.pill,
+    borderWidth: 2,
+    borderColor: colors.border,
+    alignItems: 'center',
     justifyContent: 'center',
   },
-  reasonOn: { borderColor: colors.danger, backgroundColor: '#FCE8E7' },
-  reasonText: { ...typography.body, color: colors.text },
+  radioOn: { borderColor: colors.danger },
+  radioDot: {
+    width: 12,
+    height: 12,
+    borderRadius: radius.pill,
+    backgroundColor: colors.danger,
+  },
+  reasonText: { ...typography.body, color: colors.text, flex: 1 },
   reasonTextOn: { color: colors.danger, fontWeight: '600' },
 });

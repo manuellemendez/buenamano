@@ -11,7 +11,6 @@ export default function CuentaScreen() {
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
       <StubBanner />
-      <Text style={styles.title}>Cuenta</Text>
       <Text style={styles.meta}>Rol: Seeker (demo)</Text>
       <Text style={styles.meta}>
         Backend: {getSupabaseStatus() === 'ready' ? 'Supabase listo' : 'Supabase not configured'}
@@ -28,7 +27,6 @@ export default function CuentaScreen() {
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.surface },
-  content: { padding: spacing[4], gap: spacing[3] },
-  title: { ...typography.title1, color: colors.text },
+  content: { padding: spacing[4], gap: spacing[3], paddingBottom: spacing[7] },
   meta: { ...typography.body, color: colors.textMuted },
 });

@@ -34,19 +34,22 @@ export function ReviewScaffolds({ onSubmit }: Props) {
     <View style={styles.wrap}>
       <Text style={styles.gate}>{COPY.reviewGate}</Text>
       <View style={styles.stars}>
-        {[1, 2, 3, 4, 5].map((n) => (
-          <Pressable
-            key={n}
-            onPress={() => setStars(n)}
-            accessibilityRole="button"
-            accessibilityLabel={`${n} estrellas`}
-            style={styles.starBtn}
-          >
-            <Text style={[styles.star, n <= stars && styles.starOn]}>
-              {n <= stars ? '★' : '☆'}
-            </Text>
-          </Pressable>
-        ))}
+        {[1, 2, 3, 4, 5].map((n) => {
+          const on = n <= stars;
+          return (
+            <Pressable
+              key={n}
+              onPress={() => setStars(n)}
+              accessibilityRole="button"
+              accessibilityLabel={`${n} estrellas`}
+              style={[styles.starBtn, on && styles.starBtnOn]}
+            >
+              <Text style={[styles.star, on && styles.starOn]}>
+                {on ? '★' : '☆'}
+              </Text>
+            </Pressable>
+          );
+        })}
       </View>
       <TextArea
         label="Tu reseña (obligatoria)"
@@ -85,7 +88,15 @@ const styles = StyleSheet.create({
   wrap: { gap: spacing[3] },
   gate: { ...typography.body, color: colors.textMuted },
   stars: { flexDirection: 'row', gap: spacing[1] },
-  starBtn: { minWidth: 44, minHeight: 44, alignItems: 'center', justifyContent: 'center' },
+  starBtn: {
+    minWidth: 44,
+    minHeight: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  starBtnOn: {
+    transform: [{ scale: 1.08 }],
+  },
   star: { fontSize: 28, color: colors.border },
   starOn: { color: colors.warning },
   scaffoldLabel: { ...typography.caption, color: colors.textMuted },

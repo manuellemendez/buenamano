@@ -1,6 +1,6 @@
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { colors } from '../src/theme/tokens';
+import { colors, typography } from '../src/theme/tokens';
 
 export default function RootLayout() {
   return (
@@ -10,7 +10,11 @@ export default function RootLayout() {
         screenOptions={{
           headerStyle: { backgroundColor: colors.surface },
           headerTintColor: colors.primary,
-          headerTitleStyle: { fontWeight: '700', color: colors.text },
+          headerTitleStyle: {
+            fontWeight: typography.title1.fontWeight,
+            fontSize: typography.title1.fontSize,
+            color: colors.text,
+          },
           contentStyle: { backgroundColor: colors.surface },
         }}
       >

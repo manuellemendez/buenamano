@@ -13,6 +13,8 @@ type Props = {
   onSubmit?: () => void;
 };
 
+const THUMB_TINTS = ['#E8D0C0', '#E8DFC8', '#D4E4DE', '#DDD6CE', '#F3E4DA'] as const;
+
 export function ProofUploader({
   barrioLabel,
   initialStatus = 'idle',
@@ -35,12 +37,24 @@ export function ProofUploader({
         barrio. La cédula sola no te hace Local.
       </Text>
       <View style={styles.checklist}>
-        <Text style={styles.check}>☐ Recibo / arriendo en el barrio</Text>
-        <Text style={styles.check}>☐ Foto del lugar de trabajo</Text>
-        <Text style={styles.check}>☐ (Alt.) dos vouchers de vecinos</Text>
+        <Text style={styles.check}>{slots >= 1 ? '☑' : '☐'} Recibo / arriendo en el barrio</Text>
+        <Text style={styles.check}>{slots >= 2 ? '☑' : '☐'} Foto del lugar de trabajo</Text>
+        <Text style={styles.check}>{slots >= 3 ? '☑' : '☐'} (Alt.) dos vouchers de vecinos</Text>
       </View>
+      {slots > 0 ? (
+        <View style={styles.thumbs} accessibilityLabel={`${slots} fotos listas`}>
+          {Array.from({ length: slots }, (_, i) => (
+            <View
+              key={i}
+              style={[styles.thumb, { backgroundColor: THUMB_TINTS[i % THUMB_TINTS.length] }]}
+            >
+              <Text style={styles.thumbLabel}>Foto {i + 1}</Text>
+            </View>
+          ))}
+        </View>
+      ) : null}
       <Button
-        label={slots === 0 ? 'Agregar foto (stub)' : `Fotos listas: ${slots}`}
+        label={slots === 0 ? 'Agregar foto (stub)' : `Agregar otra · ${slots} listas`}
         variant="secondary"
         onPress={() => setSlots((n) => n + 1)}
         fullWidth
@@ -84,6 +98,21 @@ const styles = StyleSheet.create({
   body: { ...typography.body, color: colors.textMuted },
   checklist: { gap: spacing[1] },
   check: { ...typography.body, color: colors.text },
+  thumbs: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing[2],
+  },
+  thumb: {
+    width: 72,
+    height: 72,
+    borderRadius: radius.sm,
+    borderWidth: 1,
+    borderColor: colors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  thumbLabel: { ...typography.micro, color: colors.textMuted },
   reject: { gap: spacing[2] },
   reason: { ...typography.caption, color: colors.danger },
 });

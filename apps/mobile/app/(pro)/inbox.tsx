@@ -28,7 +28,7 @@ export default function ProInbox() {
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.surface },
-  content: { padding: spacing[4], gap: spacing[3] },
+  content: { padding: spacing[4], gap: spacing[3], paddingBottom: spacing[7] },
   card: {
     backgroundColor: colors.surfaceCard,
     borderRadius: radius.md,

@@ -47,11 +47,15 @@ If missing, `getSupabase()` returns `null` and UI shows “not configured”. Cl
 - Descubre → `descubre_feed` (falls back to mock if empty/stub/unauth)  
 - Job contacts → RPC `get_job_participant_contacts`
 
-**Still stubbed**  
-- Auth / onboarding persistence  
+**Live (session + RLS writes)**  
+- Auth session provider, email/password login, seeker/pro signup onboarding, role routing  
+- `createJobRequest` (+ optional `job-media` photos), `submitQuote`, `submitReview`, `submitBarrioProofs`, `updateOwnProfile`, `submitReport`  
+- ReportSheet INSERT (own); admin reports queue remains near-real (own rows only — no admin SELECT)
+
+**Still stubbed / near-real**  
 - Search filters (client mock only)  
-- Request job create / pro inbox / quote compose / profile save  
-- Local proof upload bytes  
+- Pro inbox list (mock card; quote-compose is live when `requestId` is passed)  
+- Admin reports full queue (blocked by RLS — needs Security policy or Edge)  
 - Legal pages (draft banners)  
 - Push, Maps, payments (explicitly out of P0)
 
@@ -111,3 +115,22 @@ Wompi, chat product, multi-city, restaurants, Patrocinado/boost SKUs.
 5. **No service role** in the app. Use `src/lib/supabase.ts` + session Authorization (anon key only).
 
 Screens wired: `app/quotes.tsx`, `app/job/[id].tsx`, `app/admin/proofs.tsx`, `app/(seeker)/descubre.tsx`.
+
+## Auth smoke (Manuel)
+
+1. Ensure `apps/mobile/.env` has `EXPO_PUBLIC_SUPABASE_URL` + `EXPO_PUBLIC_SUPABASE_ANON_KEY` (never commit).
+2. Start: `cd apps/mobile && npx expo start` (web or device).
+3. **Create users via onboarding UI** (no service-role in app):
+   - Welcome → “Busco un oficio” / “Ofrezco un oficio”
+   - Fill email, password (≥6), display name, barrio chips (pro also picks oficios)
+   - After signup you land on role home (seeker Descubre / pro inbox)
+4. **Email confirmation:** if Auth → “Confirm email” is ON, `signUp` returns no session and profile INSERT is blocked by RLS. For local smoke, **disable Confirm email** in Supabase Dashboard (Manuel decision) or confirm via the email link then sign in.
+5. Sign in from Welcome with the same email/password. Cuenta / profile-edit show email + role + Cerrar sesión.
+6. Do **not** create users with the service role from the app. Dashboard user create is OK if preferred.
+
+## Security reminders
+
+- Contacts only via `get_job_participant_contacts` RPC  
+- Hire / confirm / admin proof / Local recompute only via Edge helpers in `api.ts`  
+- Never client-update `jobs.status` to confirmed / cancelled / disputed  
+- Pro may client-update active → pro_done only  

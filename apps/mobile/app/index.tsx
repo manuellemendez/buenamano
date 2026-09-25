@@ -1,17 +1,57 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useEffect, useState } from 'react';
+import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Button } from '../src/components';
+import { Button, Input } from '../src/components';
 import { COPY } from '../src/constants/copy';
+import { ApiError } from '../src/lib/api';
+import { roleHomePath, useAuth } from '../src/lib/auth';
 import { getSupabaseStatus } from '../src/lib/supabase';
 import { colors, radius, spacing, typography } from '../src/theme/tokens';
 
 export default function WelcomeScreen() {
   const sb = getSupabaseStatus();
+  const { ready, session, profile, signIn } = useAuth();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    if (!ready) return;
+    if (session && profile) {
+      router.replace(roleHomePath(profile.role) as never);
+    }
+  }, [ready, session, profile]);
+
+  async function onLogin() {
+    if (!email.trim() || !password) {
+      Alert.alert('Faltan datos', 'Escribe correo y contraseña.');
+      return;
+    }
+    setBusy(true);
+    try {
+      await signIn(email, password);
+      // role routing happens via useEffect after profile loads
+    } catch (e) {
+      const msg = e instanceof ApiError ? e.message : 'No se pudo iniciar sesión.';
+      Alert.alert('Error', msg);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  if (!ready) {
+    return (
+      <SafeAreaView style={[styles.safe, { justifyContent: 'center', alignItems: 'center' }]}>
+        <ActivityIndicator color={colors.primary} />
+      </SafeAreaView>
+    );
+  }
+
   return (
     <SafeAreaView style={styles.safe}>
-      <ScrollView contentContainerStyle={styles.scroll}>
+      <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
         <View style={styles.column}>
           <View style={styles.pin}>
             <Ionicons name="location" size={18} color={colors.primary} />
@@ -24,7 +64,26 @@ export default function WelcomeScreen() {
           </View>
 
           <View style={styles.actions}>
-            <Text style={styles.roleLabel}>¿Cómo entras?</Text>
+            <Text style={styles.roleLabel}>Iniciar sesión</Text>
+            <Input
+              label="Correo"
+              value={email}
+              onChangeText={setEmail}
+              placeholder="tu@correo.com"
+              keyboardType="email-address"
+              autoCapitalize="none"
+            />
+            <Input
+              label="Contraseña"
+              value={password}
+              onChangeText={setPassword}
+              placeholder="••••••••"
+              secureTextEntry
+              autoCapitalize="none"
+            />
+            <Button label="Iniciar sesión" fullWidth loading={busy} onPress={() => void onLogin()} />
+
+            <Text style={[styles.roleLabel, { marginTop: spacing[3] }]}>¿Cómo entras?</Text>
             <Button
               label="Busco un oficio (hogar)"
               fullWidth
@@ -36,20 +95,24 @@ export default function WelcomeScreen() {
               fullWidth
               onPress={() => router.push('/onboarding/pro')}
             />
-            <Pressable
-              onPress={() => router.replace('/(seeker)/descubre')}
-              accessibilityRole="link"
-              style={styles.demoLink}
-            >
-              <Text style={styles.demoText}>Saltar a Descubre (demo)</Text>
-            </Pressable>
-            <Pressable
-              onPress={() => router.push('/admin')}
-              accessibilityRole="link"
-              style={styles.demoLink}
-            >
-              <Text style={styles.demoText}>Admin (stub web)</Text>
-            </Pressable>
+            {__DEV__ ? (
+              <>
+                <Pressable
+                  onPress={() => router.replace('/(seeker)/descubre')}
+                  accessibilityRole="link"
+                  style={styles.demoLink}
+                >
+                  <Text style={styles.demoText}>Saltar a Descubre (demo)</Text>
+                </Pressable>
+                <Pressable
+                  onPress={() => router.push('/admin')}
+                  accessibilityRole="link"
+                  style={styles.demoLink}
+                >
+                  <Text style={styles.demoText}>Admin (stub web)</Text>
+                </Pressable>
+              </>
+            ) : null}
           </View>
 
           {__DEV__ ? (

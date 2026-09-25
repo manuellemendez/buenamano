@@ -12,6 +12,9 @@ type Props = {
   multiline?: boolean;
   numberOfLines?: number;
   editable?: boolean;
+  secureTextEntry?: boolean;
+  autoCapitalize?: 'none' | 'sentences' | 'words' | 'characters';
+  keyboardType?: 'default' | 'email-address' | 'numeric' | 'phone-pad';
 };
 
 export function Input({
@@ -24,6 +27,9 @@ export function Input({
   multiline,
   numberOfLines = 1,
   editable = true,
+  secureTextEntry,
+  autoCapitalize,
+  keyboardType,
 }: Props) {
   return (
     <View style={styles.wrap}>
@@ -36,6 +42,10 @@ export function Input({
         multiline={multiline}
         numberOfLines={numberOfLines}
         editable={editable}
+        secureTextEntry={secureTextEntry}
+        autoCapitalize={autoCapitalize}
+        keyboardType={keyboardType}
+        autoCorrect={secureTextEntry ? false : undefined}
         style={[
           styles.input,
           multiline && { minHeight: 96, textAlignVertical: 'top' },

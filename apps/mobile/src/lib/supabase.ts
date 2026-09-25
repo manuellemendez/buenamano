@@ -1,4 +1,6 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
+import { Platform } from 'react-native';
 
 // Security PASSED WITH CONDITIONS (CEO greenlit 2026-09-24).
 // Live Edge/RPC wiring allowed via src/lib/api.ts:
@@ -35,9 +37,10 @@ export function getSupabase(): SupabaseClient | null {
   if (cached === undefined) {
     cached = createClient(url, anonKey, {
       auth: {
+        storage: AsyncStorage,
         persistSession: true,
         autoRefreshToken: true,
-        detectSessionInUrl: typeof window !== 'undefined',
+        detectSessionInUrl: Platform.OS === 'web',
       },
     });
   }

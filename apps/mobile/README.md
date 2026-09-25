@@ -40,12 +40,18 @@ If missing, `src/lib/supabase.ts` stays `null` and UI shows “not configured”
 - ReportSheet  
 - StatusChip / EmptyState / Button / Chip / Input
 
-**Stubbed (screens navigable, backend not wired)**  
+**Wired to Edge/RPC helpers (need signed-in session for live success)**  
+- Quotes accept → `accept_quote`  
+- Job confirm (seeker) → `confirm_job`; pro done → `markJobProDone` (active→pro_done only)  
+- Admin proofs → `approve_proof` / `reject_proof` / `admin_hide` / `admin_ban`  
+- Descubre → `descubre_feed` (falls back to mock if empty/stub/unauth)  
+- Job contacts → RPC `get_job_participant_contacts`
+
+**Still stubbed**  
 - Auth / onboarding persistence  
 - Search filters (client mock only)  
-- Request job / quotes accept / job status transitions  
-- Pro inbox / quote compose / profile save  
-- Local proof upload bytes + admin approve API  
+- Request job create / pro inbox / quote compose / profile save  
+- Local proof upload bytes  
 - Legal pages (draft banners)  
 - Push, Maps, payments (explicitly out of P0)
 
@@ -93,8 +99,15 @@ Wompi, chat product, multi-city, restaurants, Patrocinado/boost SKUs.
 
 ## Security gate (CEO / Security 2026-09-24)
 
-Live Supabase keys (`EXPO_PUBLIC_*`) are OK for **auth + read scaffolding only**.
+**Status: PASSED WITH CONDITIONS** (CEO greenlit). Live Edge/RPC wiring is allowed via `src/lib/api.ts`.
 
-Do **not** wire client mutations for hire / accept quote / confirm job / admin / Local proof approve until Back-end lands Security’s three P0s. Keep those flows on mocks (`Alert` / local state).
+### Rules (do not violate)
 
-Never put the service role key in the app.
+1. **Contacts:** ONLY `supabase.rpc('get_job_participant_contacts', …)` — never `SELECT` from `job_participant_contacts` view.
+2. **Hire / confirm / admin / Local mutations** ONLY via Edge `functions.invoke` helpers:
+   `accept_quote`, `confirm_job`, `approve_proof`, `reject_proof`, `recompute_local`, `descubre_feed`, `admin_hide`, `admin_ban`.
+3. **NEVER** client-update `jobs.status` to `confirmed`, `cancelled`, or `disputed` (seeker confirm → `confirm_job` Edge).
+4. **Pro MAY** client-update job `active` → `pro_done` only (and only that transition) via `markJobProDone`.
+5. **No service role** in the app. Use `src/lib/supabase.ts` + session Authorization (anon key only).
+
+Screens wired: `app/quotes.tsx`, `app/job/[id].tsx`, `app/admin/proofs.tsx`, `app/(seeker)/descubre.tsx`.

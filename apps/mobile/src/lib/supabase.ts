@@ -1,7 +1,12 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 
-// Security gate: auth + read scaffolding only until Back-end lands Security P0s.
-// Do not invoke hire/accept/confirm/admin/Local mutation edge functions from the client yet.
+// Security PASSED WITH CONDITIONS (CEO greenlit 2026-09-24).
+// Live Edge/RPC wiring allowed via src/lib/api.ts:
+// - Contacts: ONLY rpc('get_job_participant_contacts') — never SELECT job_participant_contacts.
+// - Hire / confirm / admin / Local mutations ONLY via functions.invoke helpers.
+// - NEVER client-update jobs.status to confirmed / cancelled / disputed.
+// - Pro MAY client-update active → pro_done only.
+// Never put the service role key in the app — anon + user session Authorization only.
 
 const url = process.env.EXPO_PUBLIC_SUPABASE_URL ?? '';
 const anonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ?? '';

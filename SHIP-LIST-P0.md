@@ -1,9 +1,18 @@
-# DeAcá — P0 UI Ship List (Designer-locked)
-**Date:** 2026-09-24  
-**Source:** DESIGN-SYSTEM.md + PLAN §G P0  
-**App path:** `/workspace/deaca/apps/mobile`  
-**Admin:** `/workspace/deaca/apps/mobile/app/admin` (Expo web–friendly stubs)  
-**Backend preserved:** `/workspace/deaca/edge`, `/workspace/deaca/supabase`
+# BuenaMano — P0 UI Ship List (Designer-locked)
+**Date:** 2026-09-24 · **Updated:** 2026-09-24 (BuenaMano display rename)  
+**Display name:** **BuenaMano** (was DeAcá)  
+**Tagline (required):** Oficios de tu barrio. La confianza no se compra.  
+**Source:** `/workspace/local-proof-services/DESIGN-SYSTEM.md` + PLAN §G P0  
+**App path:** `apps/mobile` (local box checkout may still be `/workspace/deaca`)  
+**Admin:** `apps/mobile/app/admin` (Expo web–friendly stubs)  
+**Backend preserved:** `edge/`, `supabase/`  
+**GitHub:** `manuellemendez/buenamano`
+
+## Brand (locked)
+- Wordmark / splash / admin titles: **BuenaMano**
+- Welcome tagline + Descubre fairness body must carry Local DNA (name teaches skill, not barrio)
+- LocalBadge sheet + “vecinos de acá” / “No se compra” strings **unchanged**
+- Terracotta tokens + five hard gates **unchanged**
 
 ## Hard gates (do not ship without)
 1. **No Patrocinado / pay-to-rank / boost chrome** anywhere in Descubre or quotes. ✅

@@ -11,7 +11,7 @@ export default function WelcomeScreen() {
   return (
     <SafeAreaView style={styles.safe}>
       <ScrollView contentContainerStyle={styles.container}>
-        <Text style={styles.brand}>DeAcá</Text>
+        <Text style={styles.brand}>BuenaMano</Text>
         <Text style={styles.tagline}>Oficios de tu barrio. La confianza no se compra.</Text>
         <Text style={styles.body}>{COPY.onboardingBarrios}</Text>
         <Text style={styles.fair}>{COPY.fairnessDescubre}</Text>

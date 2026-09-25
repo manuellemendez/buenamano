@@ -1,7 +1,7 @@
-# DeAcá
+# BuenaMano
 
 Colombia-only local-proof **home services** marketplace (Cali barrio wedge).  
-Stack: Expo/RN + Supabase. Name locked **DeAcá**.
+Stack: Expo/RN + Supabase. Name locked **BuenaMano** (was DeAcá).
 
 ## Layout
 
@@ -16,20 +16,9 @@ Stack: Expo/RN + Supabase. Name locked **DeAcá**.
 
 ```bash
 cd apps/mobile
-cp .env.example .env   # optional — boots without keys
+cp .env.example .env   # fill EXPO_PUBLIC_SUPABASE_*
 npm install
 npx expo start
 ```
 
-See `apps/mobile/README.md` for ready vs stubbed screens.
-
-## Product locks
-
-- P0 oficios: plomería, electricidad, aseo, cerrajería (not restaurants)
-- Fair feed: no pay-to-rank; LocalBadge; review text gate; Local per barrio
-- Barrios (fixed): San Antonio, Granada, El Peñón, San Fernando / Parque del Perro
-- Payments / chat: open decisions — not invented in this scaffold
-
-## Design source of truth
-
-`/workspace/local-proof-services/DESIGN-SYSTEM.md`
+Never commit `.env` or the service role key.

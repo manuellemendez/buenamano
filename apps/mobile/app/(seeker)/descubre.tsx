@@ -26,7 +26,7 @@ function mapFeedCard(card: DescubreFeedCard): MockPro {
       : 'Consultar';
   return {
     id: card.user_id,
-    name: card.display_name?.trim() || 'Pro DeAcá',
+    name: card.display_name?.trim() || 'Pro BuenaMano',
     oficios,
     barrio,
     local: Boolean(card.is_local),

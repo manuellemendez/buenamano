@@ -1,4 +1,4 @@
-# DeAcá — mobile (Expo)
+# BuenaMano — mobile (Expo)
 
 Colombia-only home-services marketplace (plomero, electricista, aseo, cerrajería).  
 Spanish-first. Fair-feed DNA. **No pay-to-rank.**

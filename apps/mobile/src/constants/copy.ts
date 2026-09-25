@@ -1,7 +1,7 @@
 /** Spanish (Colombia) microcopy from DESIGN-SYSTEM.md */
 export const COPY = {
   fairnessDescubre:
-    'DeAcá no vende el primer puesto. Si alguien aparece arriba, es por reseñas de acá — no porque pagó.',
+    'BuenaMano no vende el primer puesto. Si alguien aparece arriba, es por reseñas de tu barrio — no porque pagó.',
   fairnessChip: 'Descubre · hoy hay cupo para oficios poco vistos',
   quoteSortLegend: 'Ordenado por confianza local, no por quien pagó',
   localSheet:

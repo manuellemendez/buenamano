@@ -9,7 +9,7 @@ export default function NotFound() {
       <View style={styles.container}>
         <Text style={styles.title}>Pantalla no encontrada</Text>
         <Link href="/" style={styles.link}>
-          Volver a DeAcá
+          Volver a BuenaMano
         </Link>
       </View>
     </>

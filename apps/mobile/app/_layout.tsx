@@ -27,7 +27,7 @@ export default function RootLayout() {
         <Stack.Screen name="review/[jobId]" options={{ title: 'Dejar reseña' }} />
         <Stack.Screen name="legal/terminos" options={{ title: 'Términos' }} />
         <Stack.Screen name="legal/privacidad" options={{ title: 'Privacidad' }} />
-        <Stack.Screen name="admin/index" options={{ title: 'Admin DeAcá' }} />
+        <Stack.Screen name="admin/index" options={{ title: 'Admin BuenaMano' }} />
         <Stack.Screen name="admin/proofs" options={{ title: 'Pruebas Local' }} />
         <Stack.Screen name="admin/reports" options={{ title: 'Reportes' }} />
       </Stack>

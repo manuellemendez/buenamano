@@ -8,7 +8,7 @@ export default function AdminHome() {
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
       <StubBanner label="Admin web P0 stubs — wire to edge functions later" />
-      <Text style={styles.title}>Admin DeAcá</Text>
+      <Text style={styles.title}>Admin BuenaMano</Text>
       <Text style={styles.body}>
         Aprobar/rechazar Local, ocultar listings, banear, ver reportes. Sin pay-to-rank tools.
       </Text>

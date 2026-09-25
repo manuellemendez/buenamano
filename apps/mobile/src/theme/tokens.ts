@@ -1,4 +1,4 @@
-/** DeAcá design tokens — contract: DESIGN-SYSTEM.md 2026-09-24 */
+/** BuenaMano design tokens — contract: DESIGN-SYSTEM.md 2026-09-24 */
 
 export const colors = {
   primary: '#C45C26',

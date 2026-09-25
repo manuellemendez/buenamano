@@ -11,33 +11,58 @@ import { colors, radius, spacing, typography } from '../theme/tokens';
 
 type Props = {
   barrio: string;
+  /**
+   * When false, render a non-button pill (for use inside an outer Pressable / card).
+   * Avoids web `<button> cannot contain a nested button`.
+   */
+  interactive?: boolean;
 };
 
-/** Pill: pin + `Local · {barrio}` — tap opens fairness sheet */
-export function LocalBadge({ barrio }: Props) {
+/** Pill: pin + `Local · {barrio}` — tap opens fairness sheet when interactive */
+export function LocalBadge({ barrio, interactive = true }: Props) {
   const [open, setOpen] = useState(false);
+  const label = `Local · ${barrio}`;
+
+  const pill = (
+    <>
+      <Text style={styles.icon}>⌂</Text>
+      <Text style={styles.label}>{label}</Text>
+    </>
+  );
+
   return (
     <>
-      <Pressable
-        onPress={() => setOpen(true)}
-        style={styles.pill}
-        accessibilityRole="button"
-        accessibilityLabel={`Local en ${barrio}. Ver explicación.`}
-      >
-        <Text style={styles.icon}>⌂</Text>
-        <Text style={styles.label}>{`Local · ${barrio}`}</Text>
-      </Pressable>
-      <Modal visible={open} transparent animationType="fade" onRequestClose={() => setOpen(false)}>
-        <Pressable style={styles.overlay} onPress={() => setOpen(false)}>
-          <View style={styles.sheet}>
-            <Text style={styles.sheetTitle}>{`Local · ${barrio}`}</Text>
-            <Text style={styles.sheetBody}>{COPY.localSheet}</Text>
-            <Pressable onPress={() => setOpen(false)} style={styles.closeBtn}>
-              <Text style={styles.closeText}>Entendido</Text>
-            </Pressable>
-          </View>
+      {interactive ? (
+        <Pressable
+          onPress={() => setOpen(true)}
+          style={styles.pill}
+          accessibilityRole="button"
+          accessibilityLabel={`Local en ${barrio}. Ver explicación.`}
+        >
+          {pill}
         </Pressable>
-      </Modal>
+      ) : (
+        <View
+          style={styles.pill}
+          accessibilityRole="text"
+          accessibilityLabel={`Local en ${barrio}`}
+        >
+          {pill}
+        </View>
+      )}
+      {interactive ? (
+        <Modal visible={open} transparent animationType="fade" onRequestClose={() => setOpen(false)}>
+          <Pressable style={styles.overlay} onPress={() => setOpen(false)}>
+            <View style={styles.sheet}>
+              <Text style={styles.sheetTitle}>{label}</Text>
+              <Text style={styles.sheetBody}>{COPY.localSheet}</Text>
+              <Pressable onPress={() => setOpen(false)} style={styles.closeBtn}>
+                <Text style={styles.closeText}>Entendido</Text>
+              </Pressable>
+            </View>
+          </Pressable>
+        </Modal>
+      ) : null}
     </>
   );
 }

@@ -36,7 +36,7 @@ export function FeedCard({ pro, onPress }: Props) {
         <Text style={styles.meta}>{barrio}</Text>
         <View style={styles.badges}>
           {pro.local ? (
-            <LocalBadge barrio={barrio} />
+            <LocalBadge barrio={barrio} interactive={false} />
           ) : (
             <Text style={styles.sinLocal}>{COPY.sinLocal}</Text>
           )}

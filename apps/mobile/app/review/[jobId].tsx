@@ -1,20 +1,46 @@
 import { router, useLocalSearchParams } from 'expo-router';
+import { useState } from 'react';
 import { Alert, ScrollView, StyleSheet } from 'react-native';
-import { ReviewScaffolds, StubBanner } from '../../src/components';
+import { ReviewScaffolds } from '../../src/components';
+import { ApiError, submitReview } from '../../src/lib/api';
 import { colors, spacing } from '../../src/theme/tokens';
 
 export default function LeaveReviewScreen() {
   const { jobId } = useLocalSearchParams<{ jobId: string }>();
+  const [busy, setBusy] = useState(false);
+
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
-      <StubBanner label={`Leave review — job ${jobId}`} />
       <ReviewScaffolds
         onSubmit={(payload) => {
-          Alert.alert(
-            'Reseña publicada (stub)',
-            `${payload.stars}★ · ${payload.text.length} chars · scaffolds: ${payload.scaffolds.join(', ') || 'ninguno'}`,
-          );
-          router.replace('/(seeker)/trabajos');
+          if (busy) return;
+          const id = typeof jobId === 'string' ? jobId : '';
+          if (!id || id === 'demo') {
+            Alert.alert(
+              'Falta job real',
+              'Abre esta pantalla desde un trabajo confirmado (UUID). El demo no inserta reseña.',
+            );
+            return;
+          }
+          setBusy(true);
+          void (async () => {
+            try {
+              await submitReview({
+                jobId: id,
+                rating: payload.stars,
+                body: payload.text,
+              });
+              Alert.alert('Reseña publicada', `${payload.stars}★ · ${payload.text.length} caracteres`);
+              router.replace('/(seeker)/trabajos');
+            } catch (e) {
+              Alert.alert(
+                'Error',
+                e instanceof ApiError ? e.message : 'No se pudo publicar la reseña.',
+              );
+            } finally {
+              setBusy(false);
+            }
+          })();
         }}
       />
     </ScrollView>

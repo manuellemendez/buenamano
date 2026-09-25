@@ -6,7 +6,7 @@ import { colors, radius, spacing, typography } from '../../src/theme/tokens';
 export default function ProInbox() {
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
-      <StubBanner label="Pro requests inbox — stub" />
+      <StubBanner label="Inbox list stub — quote-compose live si pasas requestId" />
       <View style={styles.card}>
         <Text style={styles.title}>Fuga en el baño</Text>
         <StatusChip label="Nueva solicitud" tone="warning" />

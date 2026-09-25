@@ -10,6 +10,12 @@
  */
 
 import { getSupabase, isSupabaseConfigured } from './supabase';
+import {
+  barrioUuid,
+  DEFAULT_BARRIO_UUID,
+  oficioUuid,
+} from '../constants/ids';
+import { oficioLabel } from '../constants/oficios';
 
 export type EdgeName =
   | 'accept_quote'
@@ -227,4 +233,371 @@ export async function markJobProDone(jobId: string): Promise<{ id: string; statu
     throw new ApiError('No se pudo marcar como hecho', 'update_error');
   }
   return data;
+}
+
+// ─── P0 live writes (RLS-scoped) ────────────────────────────────────────────
+
+async function requireUid(): Promise<{
+  client: NonNullable<ReturnType<typeof getSupabase>>;
+  uid: string;
+}> {
+  const client = await requireAuthedClient();
+  const {
+    data: { user },
+    error,
+  } = await client.auth.getUser();
+  if (error || !user) {
+    throw new ApiError('Debes iniciar sesión para continuar.', 'not_signed_in');
+  }
+  return { client, uid: user.id };
+}
+
+function mapUrgency(label: string): 'urgent' | 'normal' | 'low' {
+  if (label.startsWith('Urgente')) return 'urgent';
+  if (label.startsWith('Flexible')) return 'low';
+  return 'normal';
+}
+
+async function uriToBlob(uri: string): Promise<{ body: Blob; contentType: string }> {
+  const res = await fetch(uri);
+  const blob = await res.blob();
+  return { body: blob, contentType: blob.type || 'image/jpeg' };
+}
+
+function tinyJpegBlob(): Blob {
+  const bytes = Uint8Array.from([
+    0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10, 0x4a, 0x46, 0x49, 0x46, 0x00, 0x01, 0x01, 0x00, 0x00, 0x01,
+    0x00, 0x01, 0x00, 0x00, 0xff, 0xdb, 0x00, 0x43, 0x00, 0x08, 0x06, 0x06, 0x07, 0x06, 0x05, 0x08,
+    0x07, 0x07, 0x07, 0x09, 0x09, 0x08, 0x0a, 0x0c, 0x14, 0x0d, 0x0c, 0x0b, 0x0b, 0x0c, 0x19, 0x12,
+    0x13, 0x0f, 0x14, 0x1d, 0x1a, 0x1f, 0x1e, 0x1d, 0x1a, 0x1c, 0x1c, 0x20, 0x24, 0x2e, 0x27, 0x20,
+    0x22, 0x2c, 0x23, 0x1c, 0x1c, 0x28, 0x37, 0x29, 0x2c, 0x30, 0x31, 0x34, 0x34, 0x34, 0x1f, 0x27,
+    0x39, 0x3d, 0x38, 0x32, 0x3c, 0x2e, 0x33, 0x34, 0x32, 0xff, 0xc0, 0x00, 0x0b, 0x08, 0x00, 0x01,
+    0x00, 0x01, 0x01, 0x01, 0x11, 0x00, 0xff, 0xc4, 0x00, 0x14, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x03, 0xff, 0xc4, 0x00, 0x14,
+    0x10, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0xff, 0xda, 0x00, 0x08, 0x01, 0x01, 0x00, 0x00, 0x3f, 0x00, 0x7f, 0xff, 0xd9,
+  ]);
+  return new Blob([bytes], { type: 'image/jpeg' });
+}
+
+export type CreateJobRequestInput = {
+  oficioSlug: string;
+  description: string;
+  urgencyLabel: string;
+  barrioId?: string | null;
+  photoUris?: string[];
+};
+
+export async function createJobRequest(
+  input: CreateJobRequestInput,
+): Promise<{ id: string }> {
+  const { client, uid } = await requireUid();
+  const oficioId = oficioUuid(input.oficioSlug);
+  const barrioId = input.barrioId ? barrioUuid(input.barrioId) : DEFAULT_BARRIO_UUID;
+  const label = oficioLabel(input.oficioSlug);
+  const short = input.description.trim().slice(0, 40);
+  const title = `${label}${short ? ` — ${short}` : ''}`;
+
+  const { data, error } = await client
+    .from('job_requests')
+    .insert({
+      seeker_id: uid,
+      oficio_id: oficioId,
+      barrio_id: barrioId,
+      title,
+      description: input.description.trim(),
+      urgency: mapUrgency(input.urgencyLabel),
+      status: 'open',
+    })
+    .select('id')
+    .single();
+
+  if (error || !data) {
+    throw new ApiError(error?.message || 'No se pudo crear la solicitud', 'update_error');
+  }
+
+  const requestId = data.id as string;
+  for (let i = 0; i < (input.photoUris?.length ?? 0); i++) {
+    const path = `requests/${requestId}/${i}.jpg`;
+    try {
+      const { body, contentType } = await uriToBlob(input.photoUris![i]);
+      const { error: upErr } = await client.storage.from('job-media').upload(path, body, {
+        contentType,
+        upsert: true,
+      });
+      if (upErr) {
+        console.warn('[createJobRequest] upload', upErr.message);
+        continue;
+      }
+      const { error: mediaErr } = await client.from('job_request_media').insert({
+        request_id: requestId,
+        storage_path: path,
+        kind: 'work_photo',
+        uploaded_by: uid,
+      });
+      if (mediaErr) console.warn('[createJobRequest] media', mediaErr.message);
+    } catch (e) {
+      console.warn('[createJobRequest] photo failed', e);
+    }
+  }
+
+  return { id: requestId };
+}
+
+export type SubmitQuoteInput = {
+  requestId: string;
+  priceCop: number;
+  etaHours: number;
+  notes?: string;
+};
+
+export async function submitQuote(input: SubmitQuoteInput): Promise<{ id: string }> {
+  const { client, uid } = await requireUid();
+  if (!input.requestId || input.priceCop < 0 || !(input.etaHours > 0)) {
+    throw new ApiError('Precio y ETA (horas > 0) son obligatorios.', 'update_error');
+  }
+  const { data, error } = await client
+    .from('quotes')
+    .insert({
+      request_id: input.requestId,
+      pro_id: uid,
+      price_cop: Math.round(input.priceCop),
+      eta_hours: Math.round(input.etaHours),
+      notes: input.notes?.trim() || null,
+    })
+    .select('id')
+    .single();
+
+  if (error || !data) {
+    const msg = error?.message || 'No se pudo enviar la cotización';
+    if (/pro_matches|policy|row-level|violates/i.test(msg)) {
+      throw new ApiError(
+        'No puedes cotizar esta solicitud (RLS: el pro debe coincidir con oficio/barrio abierto).',
+        'update_error',
+      );
+    }
+    throw new ApiError(msg, 'update_error');
+  }
+  return { id: data.id as string };
+}
+
+export type SubmitReviewInput = {
+  jobId: string;
+  rating: number;
+  body: string;
+};
+
+export async function submitReview(input: SubmitReviewInput): Promise<{ id: string }> {
+  const { client, uid } = await requireUid();
+  const body = input.body.trim();
+  if (body.length < 40) {
+    throw new ApiError('La reseña necesita al menos 40 caracteres.', 'update_error');
+  }
+  if (input.rating < 1 || input.rating > 5) {
+    throw new ApiError('Calificación inválida.', 'update_error');
+  }
+
+  const { data: job, error: jobErr } = await client
+    .from('jobs')
+    .select('id, seeker_id, pro_id, barrio_id, status')
+    .eq('id', input.jobId)
+    .maybeSingle();
+
+  if (jobErr) throw new ApiError(jobErr.message, 'update_error');
+  if (!job) throw new ApiError('Trabajo no encontrado', 'not_found');
+  if (job.seeker_id !== uid) {
+    throw new ApiError('Solo el cliente del trabajo puede dejar reseña.', 'update_error');
+  }
+
+  const { data, error } = await client
+    .from('reviews')
+    .insert({
+      job_id: job.id,
+      seeker_id: uid,
+      pro_id: job.pro_id,
+      barrio_id: job.barrio_id,
+      rating: input.rating,
+      body,
+    })
+    .select('id')
+    .single();
+
+  if (error || !data) {
+    throw new ApiError(error?.message || 'No se pudo publicar la reseña', 'update_error');
+  }
+  return { id: data.id as string };
+}
+
+const PROOF_KINDS = ['utility_bill', 'lease', 'workplace'] as const;
+
+export type SubmitProofInput = {
+  barrioId: string;
+  photoUris?: string[];
+  slotCount?: number;
+};
+
+export async function submitBarrioProofs(
+  input: SubmitProofInput,
+): Promise<{ paths: string[] }> {
+  const { client, uid } = await requireUid();
+  const barrioId = barrioUuid(input.barrioId);
+  const count = input.photoUris?.length
+    ? input.photoUris.length
+    : Math.max(1, input.slotCount ?? 1);
+  const ts = Date.now();
+  const paths: string[] = [];
+
+  for (let i = 0; i < count; i++) {
+    const kind = PROOF_KINDS[i % PROOF_KINDS.length];
+    const path = `${uid}/${barrioId}/${ts}-${i}.jpg`;
+    const uri = input.photoUris?.[i];
+    let body: Blob;
+    let contentType = 'image/jpeg';
+    if (uri) {
+      const up = await uriToBlob(uri);
+      body = up.body;
+      contentType = up.contentType;
+    } else {
+      body = tinyJpegBlob();
+    }
+    const { error: upErr } = await client.storage.from('local-proof').upload(path, body, {
+      contentType,
+      upsert: true,
+    });
+    if (upErr) {
+      throw new ApiError(upErr.message || 'Error al subir prueba', 'update_error');
+    }
+    const { error: rowErr } = await client.from('barrio_proofs').insert({
+      pro_id: uid,
+      barrio_id: barrioId,
+      kind,
+      storage_path: path,
+      status: 'pending',
+    });
+    if (rowErr) {
+      throw new ApiError(rowErr.message || 'Error al registrar prueba', 'update_error');
+    }
+    paths.push(path);
+  }
+
+  const { data: existing } = await client
+    .from('pro_barrios')
+    .select('pro_id')
+    .eq('pro_id', uid)
+    .eq('barrio_id', barrioId)
+    .maybeSingle();
+
+  if (existing) {
+    await client
+      .from('pro_barrios')
+      .update({ proof_status: 'pending' })
+      .eq('pro_id', uid)
+      .eq('barrio_id', barrioId);
+  } else {
+    await client.from('pro_barrios').insert({
+      pro_id: uid,
+      barrio_id: barrioId,
+      proof_status: 'pending',
+    });
+  }
+
+  return { paths };
+}
+
+export type UpdateProfileInput = {
+  displayName?: string;
+  phone?: string | null;
+  bio?: string | null;
+  rateHintCop?: number | null;
+  oficioSlugs?: string[];
+};
+
+export async function updateOwnProfile(input: UpdateProfileInput): Promise<void> {
+  const { client, uid } = await requireUid();
+  const patch: Record<string, unknown> = {};
+  if (input.displayName !== undefined) patch.display_name = input.displayName.trim();
+  if (input.phone !== undefined) patch.phone = input.phone?.trim() || null;
+  if (Object.keys(patch).length) {
+    const { error } = await client.from('profiles').update(patch).eq('id', uid);
+    if (error) throw new ApiError(error.message, 'update_error');
+  }
+
+  if (input.bio !== undefined || input.rateHintCop !== undefined) {
+    const { error } = await client.from('pro_profiles').upsert(
+      {
+        user_id: uid,
+        bio: input.bio ?? null,
+        rate_hint_cop: input.rateHintCop ?? null,
+      },
+      { onConflict: 'user_id' },
+    );
+    if (error) throw new ApiError(error.message, 'update_error');
+  }
+
+  if (input.oficioSlugs) {
+    await client.from('pro_oficios').delete().eq('pro_id', uid);
+    if (input.oficioSlugs.length) {
+      const rows = input.oficioSlugs.map((slug) => ({
+        pro_id: uid,
+        oficio_id: oficioUuid(slug),
+      }));
+      const { error } = await client.from('pro_oficios').insert(rows);
+      if (error) throw new ApiError(error.message, 'update_error');
+    }
+  }
+}
+
+export type SubmitReportInput = {
+  targetType: 'profile' | 'job_request' | 'quote' | 'job' | 'review';
+  targetId: string;
+  reason: string;
+};
+
+export async function submitReport(input: SubmitReportInput): Promise<{ id: string }> {
+  const { client, uid } = await requireUid();
+  if (!input.targetId || !/^[0-9a-f-]{36}$/i.test(input.targetId)) {
+    throw new ApiError('Falta el objetivo del reporte (UUID válido).', 'update_error');
+  }
+  const { data, error } = await client
+    .from('reports')
+    .insert({
+      reporter_id: uid,
+      target_type: input.targetType,
+      target_id: input.targetId,
+      reason: input.reason.trim(),
+    })
+    .select('id')
+    .single();
+  if (error || !data) {
+    throw new ApiError(error?.message || 'No se pudo enviar el reporte', 'update_error');
+  }
+  return { id: data.id as string };
+}
+
+export type ReportRow = {
+  id: string;
+  reason: string;
+  target_type: string;
+  target_id: string;
+  status: string;
+  created_at: string;
+};
+
+/** Own reports only — admin queue blocked by RLS (no admin SELECT). */
+export async function listOwnReports(): Promise<{
+  rows: ReportRow[];
+  adminBlocked: boolean;
+}> {
+  try {
+    const { client } = await requireUid();
+    const { data, error } = await client
+      .from('reports')
+      .select('id, reason, target_type, target_id, status, created_at')
+      .order('created_at', { ascending: false })
+      .limit(50);
+    if (error) return { rows: [], adminBlocked: true };
+    return { rows: (data ?? []) as ReportRow[], adminBlocked: true };
+  } catch {
+    return { rows: [], adminBlocked: true };
+  }
 }

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Alert, StyleSheet, Text, View } from 'react-native';
+import { ApiError, submitBarrioProofs } from '../lib/api';
 import { colors, radius, spacing, typography } from '../theme/tokens';
 import { Button } from './Button';
 import { StatusChip } from './StatusChip';
@@ -8,6 +9,8 @@ export type ProofStatus = 'idle' | 'en_revision' | 'aprobado' | 'rechazado';
 
 type Props = {
   barrioLabel: string;
+  /** UUID or slug — required for live insert */
+  barrioId: string;
   initialStatus?: ProofStatus;
   rejectReason?: string;
   onSubmit?: () => void;
@@ -17,16 +20,29 @@ const THUMB_TINTS = ['#E8D0C0', '#E8DFC8', '#D4E4DE', '#DDD6CE', '#F3E4DA'] as c
 
 export function ProofUploader({
   barrioLabel,
+  barrioId,
   initialStatus = 'idle',
   rejectReason,
   onSubmit,
 }: Props) {
   const [status, setStatus] = useState<ProofStatus>(initialStatus);
   const [slots, setSlots] = useState(0);
+  const [busy, setBusy] = useState(false);
 
-  function submit() {
-    setStatus('en_revision');
-    onSubmit?.();
+  async function submit() {
+    if (slots < 1 || busy) return;
+    setBusy(true);
+    try {
+      // Slot placeholders → tiny JPEG smoke uploads (picker optional later)
+      await submitBarrioProofs({ barrioId, slotCount: slots });
+      setStatus('en_revision');
+      onSubmit?.();
+      Alert.alert('Enviado', 'Prueba en revisión. Te avisamos por push.');
+    } catch (e) {
+      Alert.alert('Error', e instanceof ApiError ? e.message : 'No se pudo enviar la prueba.');
+    } finally {
+      setBusy(false);
+    }
   }
 
   return (
@@ -42,7 +58,10 @@ export function ProofUploader({
         <Text style={styles.check}>{slots >= 3 ? '☑' : '☐'} (Alt.) dos vouchers de vecinos</Text>
       </View>
       {slots > 0 ? (
-        <View style={styles.thumbs} accessibilityLabel={`${slots} foto${slots === 1 ? '' : 's'} lista${slots === 1 ? '' : 's'}`}>
+        <View
+          style={styles.thumbs}
+          accessibilityLabel={`${slots} foto${slots === 1 ? '' : 's'} lista${slots === 1 ? '' : 's'}`}
+        >
           {Array.from({ length: slots }, (_, i) => (
             <View
               key={i}
@@ -54,7 +73,11 @@ export function ProofUploader({
         </View>
       ) : null}
       <Button
-        label={slots === 0 ? 'Agregar foto (stub)' : `Agregar otra · ${slots} lista${slots === 1 ? '' : 's'}`}
+        label={
+          slots === 0
+            ? 'Agregar foto'
+            : `Agregar otra · ${slots} lista${slots === 1 ? '' : 's'}`
+        }
         variant="secondary"
         onPress={() => setSlots((n) => n + 1)}
         fullWidth
@@ -63,16 +86,15 @@ export function ProofUploader({
         <Button
           label="Enviar prueba"
           disabled={slots < 1}
-          onPress={submit}
+          loading={busy}
+          onPress={() => void submit()}
           fullWidth
         />
       ) : null}
       {status === 'en_revision' ? (
         <StatusChip label="En revisión — te avisamos por push" tone="warning" />
       ) : null}
-      {status === 'aprobado' ? (
-        <StatusChip label="Aprobado" tone="success" />
-      ) : null}
+      {status === 'aprobado' ? <StatusChip label="Aprobado" tone="success" /> : null}
       {status === 'rechazado' ? (
         <View style={styles.reject}>
           <StatusChip label="Rechazado" tone="danger" />

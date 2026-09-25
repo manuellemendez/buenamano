@@ -16,7 +16,12 @@ export default function ProProfileScreen() {
       <ProCard pro={pro} />
       <Button label="Pedir cotización" fullWidth onPress={() => router.push('/request')} />
       <Button label="Reportar" variant="ghost" onPress={() => setReportOpen(true)} fullWidth />
-      <ReportSheet visible={reportOpen} onClose={() => setReportOpen(false)} />
+      <ReportSheet
+        visible={reportOpen}
+        onClose={() => setReportOpen(false)}
+        targetType="profile"
+        targetId={typeof id === 'string' && /^[0-9a-f-]{36}$/i.test(id) ? id : (pro?.id ?? id)}
+      />
     </ScrollView>
   );
 }

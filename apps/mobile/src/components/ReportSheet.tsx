@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Alert, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import { REPORT_REASONS } from '../constants/copy';
+import { ApiError, submitReport } from '../lib/api';
 import { colors, radius, spacing, typography } from '../theme/tokens';
 import { Button } from './Button';
 import { TextArea } from './Input';
@@ -8,19 +9,33 @@ import { TextArea } from './Input';
 type Props = {
   visible: boolean;
   onClose: () => void;
+  targetType: 'profile' | 'job_request' | 'quote' | 'job' | 'review';
+  targetId: string;
   onSubmit?: (payload: { reasonId: string; detail: string }) => void;
 };
 
-export function ReportSheet({ visible, onClose, onSubmit }: Props) {
+export function ReportSheet({ visible, onClose, targetType, targetId, onSubmit }: Props) {
   const [reasonId, setReasonId] = useState<string | null>(null);
   const [detail, setDetail] = useState('');
+  const [busy, setBusy] = useState(false);
 
-  function submit() {
-    if (!reasonId) return;
-    onSubmit?.({ reasonId, detail });
-    setReasonId(null);
-    setDetail('');
-    onClose();
+  async function submit() {
+    if (!reasonId || busy) return;
+    const reasonLabel = REPORT_REASONS.find((r) => r.id === reasonId)?.label ?? reasonId;
+    const reason = detail.trim() ? `${reasonLabel}: ${detail.trim()}` : reasonLabel;
+    setBusy(true);
+    try {
+      await submitReport({ targetType, targetId, reason });
+      onSubmit?.({ reasonId, detail });
+      setReasonId(null);
+      setDetail('');
+      onClose();
+      Alert.alert('Reporte enviado', 'Revisamos en <24h en smoke.');
+    } catch (e) {
+      Alert.alert('Error', e instanceof ApiError ? e.message : 'No se pudo enviar el reporte.');
+    } finally {
+      setBusy(false);
+    }
   }
 
   return (
@@ -55,7 +70,13 @@ export function ReportSheet({ visible, onClose, onSubmit }: Props) {
             onChangeText={setDetail}
             placeholder="Ej. no llegó a la hora acordada"
           />
-          <Button label="Enviar reporte" disabled={!reasonId} onPress={submit} fullWidth />
+          <Button
+            label="Enviar reporte"
+            disabled={!reasonId}
+            loading={busy}
+            onPress={() => void submit()}
+            fullWidth
+          />
           <Button label="Cancelar" variant="ghost" onPress={onClose} fullWidth />
         </Pressable>
       </Pressable>

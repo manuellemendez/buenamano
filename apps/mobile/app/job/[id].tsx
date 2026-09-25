@@ -144,7 +144,12 @@ export default function ActiveJobScreen() {
         </>
       ) : null}
       <Button label="Reportar" variant="danger" onPress={() => setReportOpen(true)} fullWidth />
-      <ReportSheet visible={reportOpen} onClose={() => setReportOpen(false)} />
+      <ReportSheet
+        visible={reportOpen}
+        onClose={() => setReportOpen(false)}
+        targetType="job"
+        targetId={jobId}
+      />
     </ScrollView>
   );
 }

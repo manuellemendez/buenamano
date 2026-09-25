@@ -1,12 +1,14 @@
+import { Ionicons } from '@expo/vector-icons';
 import { Tabs } from 'expo-router';
-import { Text } from 'react-native';
+import type { ComponentProps } from 'react';
+import type { ColorValue } from 'react-native';
 import { colors } from '../../src/theme/tokens';
 
-function TabIcon({ label, focused }: { label: string; focused: boolean }) {
-  return (
-    <Text style={{ fontSize: 11, color: focused ? colors.primary : colors.textMuted, fontWeight: focused ? '700' : '400' }}>
-      {label}
-    </Text>
+type IconName = ComponentProps<typeof Ionicons>['name'];
+
+function tabIcon(outline: IconName, filled: IconName) {
+  return ({ focused, color }: { focused: boolean; color: ColorValue }) => (
+    <Ionicons name={focused ? filled : outline} size={24} color={color as string} />
   );
 }
 
@@ -18,11 +20,30 @@ export default function ProTabs() {
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.textMuted,
         tabBarStyle: { backgroundColor: colors.surfaceCard, borderTopColor: colors.border },
+        tabBarLabelStyle: { fontSize: 11 },
       }}
     >
-      <Tabs.Screen name="inbox" options={{ title: 'Solicitudes', tabBarIcon: ({ focused }) => <TabIcon label="☰" focused={focused} /> }} />
-      <Tabs.Screen name="local-status" options={{ title: 'Local', tabBarIcon: ({ focused }) => <TabIcon label="★" focused={focused} /> }} />
-      <Tabs.Screen name="profile-edit" options={{ title: 'Perfil', tabBarIcon: ({ focused }) => <TabIcon label="☺" focused={focused} /> }} />
+      <Tabs.Screen
+        name="inbox"
+        options={{
+          title: 'Solicitudes',
+          tabBarIcon: tabIcon('mail-outline', 'mail'),
+        }}
+      />
+      <Tabs.Screen
+        name="local-status"
+        options={{
+          title: 'Local',
+          tabBarIcon: tabIcon('star-outline', 'star'),
+        }}
+      />
+      <Tabs.Screen
+        name="profile-edit"
+        options={{
+          title: 'Perfil',
+          tabBarIcon: tabIcon('person-outline', 'person'),
+        }}
+      />
       <Tabs.Screen name="quote-compose" options={{ href: null, title: 'Cotizar' }} />
       <Tabs.Screen name="local-proof" options={{ href: null, title: 'Prueba Local' }} />
     </Tabs>

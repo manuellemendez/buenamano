@@ -3,6 +3,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import { colors, radius, spacing, typography } from '../theme/tokens';
 
 export function StubBanner({ label = 'Flujo stub — UI lista, backend pendiente' }: { label?: string }) {
+  if (!__DEV__) return null;
   return (
     <View style={styles.banner}>
       <Text style={styles.text}>{label}</Text>

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Button, StatusChip, StubBanner } from '../../src/components';
 import {
   adminBan,
@@ -68,89 +68,103 @@ export default function AdminProofs() {
       <StubBanner label="approve_proof / reject_proof / admin_hide / admin_ban Edge" />
       {rows.map((r) => (
         <View key={r.id} style={styles.card}>
-          <Text style={styles.title}>{r.pro}</Text>
-          <Text style={styles.meta}>Barrio: {r.barrio}</Text>
-          <StatusChip
-            label={
-              r.status === 'en_revision'
-                ? 'En revisión'
-                : r.status === 'aprobado'
-                  ? 'Aprobado'
-                  : `Rechazado${r.reason ? ` — ${r.reason}` : ''}`
-            }
-            tone={r.status === 'aprobado' ? 'success' : r.status === 'rechazado' ? 'danger' : 'warning'}
-          />
-          {r.status === 'en_revision' ? (
-            <>
-              <Button
-                label="Aprobar Local"
-                loading={busyKey === `approve-${r.id}`}
-                onPress={() =>
-                  void run(
-                    `approve-${r.id}`,
-                    () => approveProof(r.id),
-                    () =>
-                      setRows((prev) =>
-                        prev.map((row) => (row.id === r.id ? { ...row, status: 'aprobado' } : row)),
-                      ),
-                    'Aprobar',
-                    'Prueba Local aprobada.',
-                  )
-                }
-                style={{ marginTop: 8 }}
-              />
-              <Button
-                label="Rechazar"
-                variant="danger"
-                loading={busyKey === `reject-${r.id}`}
-                onPress={() => {
-                  const reason = 'Documento no legible';
-                  void run(
-                    `reject-${r.id}`,
-                    () => rejectProof(r.id, reason),
-                    () =>
-                      setRows((prev) =>
-                        prev.map((row) =>
-                          row.id === r.id ? { ...row, status: 'rechazado', reason } : row,
+          <View style={styles.header}>
+            <Text style={styles.title} numberOfLines={1}>
+              {r.pro}
+              <Text style={styles.metaInline}> · {r.barrio}</Text>
+            </Text>
+            <StatusChip
+              label={
+                r.status === 'en_revision'
+                  ? 'En revisión'
+                  : r.status === 'aprobado'
+                    ? 'Aprobado'
+                    : `Rechazado${r.reason ? ` — ${r.reason}` : ''}`
+              }
+              tone={r.status === 'aprobado' ? 'success' : r.status === 'rechazado' ? 'danger' : 'warning'}
+            />
+          </View>
+          <View style={styles.actions}>
+            {r.status === 'en_revision' ? (
+              <>
+                <Button
+                  label="Aprobar"
+                  loading={busyKey === `approve-${r.id}`}
+                  onPress={() =>
+                    void run(
+                      `approve-${r.id}`,
+                      () => approveProof(r.id),
+                      () =>
+                        setRows((prev) =>
+                          prev.map((row) => (row.id === r.id ? { ...row, status: 'aprobado' } : row)),
                         ),
-                      ),
-                    'Rechazar',
-                    `Rechazado: ${reason}`,
-                  );
-                }}
-                style={{ marginTop: 8 }}
-              />
-            </>
-          ) : null}
-          <Button
-            label="Ocultar listing"
-            variant="secondary"
-            loading={busyKey === `hide-${r.id}`}
-            onPress={() =>
-              void run(
-                `hide-${r.id}`,
-                () => adminHide(r.proUserId, true),
-                undefined,
-                'Ocultar',
-                `Listing oculto: ${r.pro}`,
-              )
-            }
-            style={{ marginTop: 8 }}
-          />
-          <Button
-            label="Banear usuario"
-            variant="ghost"
-            loading={busyKey === `ban-${r.id}`}
-            onPress={() =>
-              void run(
-                `ban-${r.id}`,
-                () => adminBan(r.proUserId, true),
-                undefined,
-                'Banear',
-                `Usuario baneado: ${r.pro}`,
-              )
-            }
-          />
+                      'Aprobar',
+                      'Prueba Local aprobada.',
+                    )
+                  }
+                  style={styles.actionBtn}
+                />
+                <Button
+                  label="Rechazar"
+                  variant="danger"
+                  loading={busyKey === `reject-${r.id}`}
+                  onPress={() => {
+                    const reason = 'Documento no legible';
+                    void run(
+                      `reject-${r.id}`,
+                      () => rejectProof(r.id, reason),
+                      () =>
+                        setRows((prev) =>
+                          prev.map((row) =>
+                            row.id === r.id ? { ...row, status: 'rechazado', reason } : row,
+                          ),
+                        ),
+                      'Rechazar',
+                      `Rechazado: ${reason}`,
+                    );
+                  }}
+                  style={styles.actionBtn}
+                />
+              </>
+            ) : null}
+            <Button
+              label="Ocultar"
+              variant="secondary"
+              loading={busyKey === `hide-${r.id}`}
+              onPress={() =>
+                void run(
+                  `hide-${r.id}`,
+                  () => adminHide(r.proUserId, true),
+                  undefined,
+                  'Ocultar',
+                  `Listing oculto: ${r.pro}`,
+                )
+              }
+              style={styles.actionBtn}
+            />
+            <Pressable
+              accessibilityRole="button"
+              disabled={busyKey === `ban-${r.id}`}
+              onPress={() =>
+                void run(
+                  `ban-${r.id}`,
+                  () => adminBan(r.proUserId, true),
+                  undefined,
+                  'Banear',
+                  `Usuario baneado: ${r.pro}`,
+                )
+              }
+              style={({ pressed }) => [
+                styles.banBtn,
+                pressed && styles.banPressed,
+                busyKey === `ban-${r.id}` && styles.banDisabled,
+              ]}
+            >
+              <Text style={styles.banText}>
+                {busyKey === `ban-${r.id}` ? '…' : 'Banear'}
+              </Text>
+            </Pressable>
+          </View>
         </View>
       ))}
     </ScrollView>
@@ -166,8 +180,32 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.border,
     padding: spacing[4],
+    gap: spacing[3],
+  },
+  header: { gap: spacing[2] },
+  title: { ...typography.title2, color: colors.text },
+  metaInline: { ...typography.caption, color: colors.textMuted, fontWeight: '400' },
+  actions: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
     gap: spacing[2],
   },
-  title: { ...typography.title2, color: colors.text },
-  meta: { ...typography.caption, color: colors.textMuted },
+  actionBtn: {
+    flexGrow: 1,
+    flexBasis: '46%',
+    minHeight: 44,
+  },
+  banBtn: {
+    flexGrow: 1,
+    flexBasis: '46%',
+    minHeight: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: spacing[4],
+    paddingVertical: spacing[3],
+    borderRadius: radius.sm,
+  },
+  banPressed: { backgroundColor: colors.surfaceMuted },
+  banDisabled: { opacity: 0.45 },
+  banText: { ...typography.bodyStrong, color: colors.danger },
 });

@@ -15,7 +15,13 @@ export default function ProInbox() {
         <Button label="Enviar cotización" onPress={() => router.push('/(pro)/quote-compose')} style={{ marginTop: 8 }} />
         <Button label="Ver trabajo activo" variant="secondary" onPress={() => router.push('/job/demo')} style={{ marginTop: 8 }} />
       </View>
-      <EmptyState title="Sin más solicitudes" body="Cuando un hogar pida tu oficio en tus barrios, aparece acá." />
+      <EmptyState
+        title="Sin más solicitudes"
+        body="Cuando un hogar pida tu oficio en tus barrios, aparece acá."
+        ctaLabel="Invita a un Local"
+        onCta={() => router.push('/(pro)/local-status')}
+        icon="mail-outline"
+      />
     </ScrollView>
   );
 }

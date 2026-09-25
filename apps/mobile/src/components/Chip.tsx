@@ -2,6 +2,8 @@ import React from 'react';
 import { Pressable, StyleSheet, Text } from 'react-native';
 import { colors, radius, spacing, typography } from '../theme/tokens';
 
+const SELECTED_FILL = '#F3E4DA';
+
 type Props = {
   label: string;
   selected?: boolean;
@@ -36,8 +38,8 @@ const styles = StyleSheet.create({
   },
   selected: {
     borderColor: colors.primary,
-    backgroundColor: colors.surfaceMuted,
+    backgroundColor: SELECTED_FILL,
   },
   text: { ...typography.caption, color: colors.text },
-  textSelected: { color: colors.primary, fontWeight: '600' },
+  textSelected: { ...typography.bodyStrong, color: colors.primary, fontSize: 13, lineHeight: 18 },
 });

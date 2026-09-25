@@ -1,12 +1,14 @@
+import { Ionicons } from '@expo/vector-icons';
 import { Tabs } from 'expo-router';
-import { Text } from 'react-native';
+import type { ComponentProps } from 'react';
+import type { ColorValue } from 'react-native';
 import { colors } from '../../src/theme/tokens';
 
-function TabIcon({ label, focused }: { label: string; focused: boolean }) {
-  return (
-    <Text style={{ fontSize: 11, color: focused ? colors.primary : colors.textMuted, fontWeight: focused ? '700' : '400' }}>
-      {label}
-    </Text>
+type IconName = ComponentProps<typeof Ionicons>['name'];
+
+function tabIcon(outline: IconName, filled: IconName) {
+  return ({ focused, color }: { focused: boolean; color: ColorValue }) => (
+    <Ionicons name={focused ? filled : outline} size={24} color={color as string} />
   );
 }
 
@@ -19,34 +21,35 @@ export default function SeekerTabs() {
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.textMuted,
         tabBarStyle: { backgroundColor: colors.surfaceCard, borderTopColor: colors.border },
+        tabBarLabelStyle: { fontSize: 11 },
       }}
     >
       <Tabs.Screen
         name="descubre"
         options={{
           title: 'Descubre',
-          tabBarIcon: ({ focused }) => <TabIcon label="⌂" focused={focused} />,
+          tabBarIcon: tabIcon('compass-outline', 'compass'),
         }}
       />
       <Tabs.Screen
         name="trabajos"
         options={{
           title: 'Trabajos',
-          tabBarIcon: ({ focused }) => <TabIcon label="≡" focused={focused} />,
+          tabBarIcon: tabIcon('list-outline', 'list'),
         }}
       />
       <Tabs.Screen
         name="local"
         options={{
           title: 'Local',
-          tabBarIcon: ({ focused }) => <TabIcon label="★" focused={focused} />,
+          tabBarIcon: tabIcon('star-outline', 'star'),
         }}
       />
       <Tabs.Screen
         name="cuenta"
         options={{
           title: 'Cuenta',
-          tabBarIcon: ({ focused }) => <TabIcon label="☺" focused={focused} />,
+          tabBarIcon: tabIcon('person-outline', 'person'),
         }}
       />
     </Tabs>

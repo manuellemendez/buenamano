@@ -1,7 +1,7 @@
 import { router } from 'expo-router';
 import { useMemo, useState } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
-import { Button, Chip, FeedCard, StubBanner } from '../src/components';
+import { ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
+import { Button, Chip, EmptyState, FeedCard, StubBanner } from '../src/components';
 import { BARRIOS } from '../src/constants/barrios';
 import { OFICIOS } from '../src/constants/oficios';
 import { MOCK_PROS } from '../src/data/mock';
@@ -27,21 +27,50 @@ export default function SearchFilters() {
       <Text style={styles.label}>Oficio</Text>
       <View style={styles.chips}>
         {OFICIOS.map((o) => (
-          <Chip key={o.id} label={o.label} selected={oficio === o.id} onPress={() => setOficio(oficio === o.id ? null : o.id)} />
+          <Chip
+            key={o.id}
+            label={o.label}
+            selected={oficio === o.id}
+            onPress={() => setOficio(oficio === o.id ? null : o.id)}
+          />
         ))}
       </View>
       <Text style={styles.label}>Barrio</Text>
       <View style={styles.chips}>
         {BARRIOS.map((b) => (
-          <Chip key={b.id} label={b.label} selected={barrio === b.id} onPress={() => setBarrio(barrio === b.id ? null : b.id)} />
+          <Chip
+            key={b.id}
+            label={b.label}
+            selected={barrio === b.id}
+            onPress={() => setBarrio(barrio === b.id ? null : b.id)}
+          />
         ))}
       </View>
-      <Chip label="Solo Local" selected={soloLocal} onPress={() => setSoloLocal((v) => !v)} />
+      <View style={styles.switchRow}>
+        <Text style={styles.switchLabel}>Solo Local</Text>
+        <Switch
+          value={soloLocal}
+          onValueChange={setSoloLocal}
+          trackColor={{ false: colors.border, true: '#F3E4DA' }}
+          thumbColor={soloLocal ? colors.primary : colors.surfaceMuted}
+          accessibilityLabel="Solo Local"
+        />
+      </View>
       <Text style={styles.count}>{filtered.length} resultados</Text>
       {filtered.length === 0 ? (
-        <Text style={styles.empty}>
-          No encontramos oficios Local con ese filtro — quita ‘Solo Local’ o cambia el oficio.
-        </Text>
+        <EmptyState
+          title="Sin resultados"
+          body="No encontramos oficios Local con ese filtro — quita ‘Solo Local’ o cambia el oficio."
+          ctaLabel={soloLocal ? 'Quitar Solo Local' : 'Limpiar filtros'}
+          onCta={() => {
+            if (soloLocal) setSoloLocal(false);
+            else {
+              setOficio(null);
+              setBarrio(null);
+            }
+          }}
+          icon="search-outline"
+        />
       ) : (
         filtered.map((p) => (
           <FeedCard key={p.id} pro={p} onPress={() => router.push(`/pro/${p.id}`)} />
@@ -57,6 +86,14 @@ const styles = StyleSheet.create({
   content: { padding: spacing[4], gap: spacing[2], paddingBottom: spacing[7] },
   label: { ...typography.bodyStrong, color: colors.text, marginTop: spacing[2] },
   chips: { flexDirection: 'row', flexWrap: 'wrap' },
+  switchRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    minHeight: 44,
+    marginTop: spacing[2],
+    marginBottom: spacing[1],
+  },
+  switchLabel: { ...typography.bodyStrong, color: colors.text },
   count: { ...typography.caption, color: colors.textMuted, marginVertical: spacing[2] },
-  empty: { ...typography.body, color: colors.textMuted },
 });

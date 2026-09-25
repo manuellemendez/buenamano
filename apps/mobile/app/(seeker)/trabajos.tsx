@@ -19,6 +19,7 @@ export default function TrabajosScreen() {
         body="Cuando pidas un oficio, aparece acá."
         ctaLabel="Pedir oficio"
         onCta={() => router.push('/request')}
+        icon="construct-outline"
       />
     </ScrollView>
   );

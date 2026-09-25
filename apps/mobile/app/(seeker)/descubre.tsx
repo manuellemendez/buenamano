@@ -1,7 +1,16 @@
 import { router } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { Button, FeedCard } from '../../src/components';
+import {
+  ActivityIndicator,
+  Modal,
+  Pressable,
+  RefreshControl,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
+import { Button, EmptyState, FeedCard } from '../../src/components';
 import { COPY } from '../../src/constants/copy';
 import { MOCK_PROS, type MockPro } from '../../src/data/mock';
 import type { BarrioId } from '../../src/constants/barrios';
@@ -42,10 +51,13 @@ export default function DescubreScreen() {
   const [pros, setPros] = useState<MockPro[]>(MOCK_PROS);
   const [source, setSource] = useState<'mock' | 'edge' | 'stub'>('mock');
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [note, setNote] = useState<string | null>(null);
+  const [fairOpen, setFairOpen] = useState(false);
 
-  const load = useCallback(async () => {
-    setLoading(true);
+  const load = useCallback(async (isRefresh = false) => {
+    if (isRefresh) setRefreshing(true);
+    else setLoading(true);
     setNote(null);
     try {
       const result = await fetchDescubreFeed({ limit: 20 });
@@ -75,6 +87,7 @@ export default function DescubreScreen() {
       setNote(`${msg} — usando mock.`);
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
   }, []);
 
@@ -83,33 +96,63 @@ export default function DescubreScreen() {
   }, [load]);
 
   return (
-    <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
-      <View style={styles.fairChip}>
-        <Text style={styles.fairChipText}>{COPY.fairnessChip}</Text>
-      </View>
-      <Text style={styles.fairBody}>{COPY.fairnessDescubre}</Text>
-      {note ? <Text style={styles.note}>{note}</Text> : null}
-      <Button
-        label="Buscar / Filtros"
-        variant="secondary"
-        onPress={() => router.push('/search')}
-        style={{ marginBottom: spacing[3] }}
-      />
-      <Button
-        label={loading ? 'Cargando…' : 'Actualizar feed'}
-        variant="ghost"
-        disabled={loading}
-        onPress={() => void load()}
-        style={{ marginBottom: spacing[3] }}
-      />
-      {loading ? (
-        <ActivityIndicator color={colors.primary} style={{ marginVertical: spacing[4] }} />
-      ) : (
-        pros.map((p) => (
-          <FeedCard key={`${source}-${p.id}`} pro={p} onPress={() => router.push(`/pro/${p.id}`)} />
-        ))
-      )}
-    </ScrollView>
+    <>
+      <ScrollView
+        style={styles.screen}
+        contentContainerStyle={styles.content}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={() => void load(true)}
+            tintColor={colors.primary}
+            colors={[colors.primary]}
+          />
+        }
+      >
+        <Pressable
+          onPress={() => setFairOpen(true)}
+          style={styles.fairChip}
+          accessibilityRole="button"
+          accessibilityLabel={`${COPY.fairnessChip}. Ver explicación.`}
+        >
+          <Text style={styles.fairChipText}>{COPY.fairnessChip}</Text>
+        </Pressable>
+        {__DEV__ && note ? <Text style={styles.note}>{note}</Text> : null}
+        <Button
+          label="Buscar / Filtros"
+          variant="secondary"
+          onPress={() => router.push('/search')}
+          style={{ marginBottom: spacing[3] }}
+        />
+        {loading ? (
+          <ActivityIndicator color={colors.primary} style={{ marginVertical: spacing[4] }} />
+        ) : pros.length === 0 ? (
+          <EmptyState
+            title="Sin oficios por ahora"
+            body="Prueba quitar filtros o vuelve más tarde."
+            ctaLabel="Buscar / Filtros"
+            onCta={() => router.push('/search')}
+            icon="search-outline"
+          />
+        ) : (
+          pros.map((p) => (
+            <FeedCard key={`${source}-${p.id}`} pro={p} onPress={() => router.push(`/pro/${p.id}`)} />
+          ))
+        )}
+      </ScrollView>
+
+      <Modal visible={fairOpen} transparent animationType="fade" onRequestClose={() => setFairOpen(false)}>
+        <Pressable style={styles.overlay} onPress={() => setFairOpen(false)}>
+          <View style={styles.sheet}>
+            <Text style={styles.sheetTitle}>{COPY.fairnessChip}</Text>
+            <Text style={styles.sheetBody}>{COPY.fairnessDescubre}</Text>
+            <Pressable onPress={() => setFairOpen(false)} style={styles.closeBtn}>
+              <Text style={styles.closeText}>Entendido</Text>
+            </Pressable>
+          </View>
+        </Pressable>
+      </Modal>
+    </>
   );
 }
 
@@ -122,17 +165,38 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing[3],
     paddingVertical: spacing[2],
     alignSelf: 'flex-start',
-    marginBottom: spacing[2],
+    marginBottom: spacing[3],
+    minHeight: 36,
+    justifyContent: 'center',
   },
   fairChipText: { ...typography.micro, color: colors.textOnPrimary },
-  fairBody: {
-    ...typography.caption,
-    color: colors.secondary,
-    marginBottom: spacing[2],
-  },
   note: {
     ...typography.caption,
     color: colors.textMuted,
     marginBottom: spacing[3],
   },
+  overlay: {
+    flex: 1,
+    backgroundColor: colors.overlay,
+    justifyContent: 'flex-end',
+  },
+  sheet: {
+    backgroundColor: colors.surfaceCard,
+    borderTopLeftRadius: radius.lg,
+    borderTopRightRadius: radius.lg,
+    padding: spacing[5],
+    gap: spacing[3],
+  },
+  sheetTitle: { ...typography.title2, color: colors.text },
+  sheetBody: { ...typography.body, color: colors.textMuted },
+  closeBtn: {
+    marginTop: spacing[2],
+    backgroundColor: colors.primary,
+    borderRadius: radius.sm,
+    padding: spacing[3],
+    alignItems: 'center',
+    minHeight: 44,
+    justifyContent: 'center',
+  },
+  closeText: { ...typography.bodyStrong, color: colors.textOnPrimary },
 });

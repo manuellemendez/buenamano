@@ -3,7 +3,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import { barrioLabel } from '../constants/barrios';
 import { COPY } from '../constants/copy';
 import type { MockQuote } from '../data/mock';
-import { colors, radius, spacing, typography } from '../theme/tokens';
+import { colors, spacing, typography } from '../theme/tokens';
 import { Button } from './Button';
 import { LocalBadge } from './LocalBadge';
 
@@ -11,6 +11,8 @@ type Props = {
   quotes: MockQuote[];
   onAccept?: (quoteId: string) => void;
 };
+
+const CARD_RADIUS = 14;
 
 export function QuoteCompare({ quotes, onAccept }: Props) {
   return (
@@ -24,9 +26,8 @@ export function QuoteCompare({ quotes, onAccept }: Props) {
             <Text style={styles.name}>{q.proName}</Text>
             {q.local ? <LocalBadge barrio={barrioLabel(q.barrio)} /> : null}
           </View>
-          <Text style={styles.price}>
-            {q.priceLabel} · puede ir {q.eta}
-          </Text>
+          <Text style={styles.price}>{q.priceLabel}</Text>
+          <Text style={styles.eta}>Puede ir {q.eta}</Text>
           <Text style={styles.note}>{q.note}</Text>
           <Button
             label={`Aceptar a ${q.proName.split(' ')[0]}`}
@@ -44,7 +45,7 @@ const styles = StyleSheet.create({
   wrap: { gap: spacing[3] },
   legend: {
     backgroundColor: colors.surfaceMuted,
-    borderRadius: radius.sm,
+    borderRadius: 8,
     padding: spacing[3],
     borderLeftWidth: 3,
     borderLeftColor: colors.secondary,
@@ -52,7 +53,7 @@ const styles = StyleSheet.create({
   legendText: { ...typography.caption, color: colors.secondary, fontWeight: '600' },
   card: {
     backgroundColor: colors.surfaceCard,
-    borderRadius: radius.md,
+    borderRadius: CARD_RADIUS,
     borderWidth: 1,
     borderColor: colors.border,
     padding: spacing[4],
@@ -61,5 +62,6 @@ const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', gap: spacing[2], flexWrap: 'wrap' },
   name: { ...typography.title2, color: colors.text },
   price: { ...typography.callout, color: colors.text },
+  eta: { ...typography.caption, color: colors.textMuted },
   note: { ...typography.body, color: colors.textMuted },
 });
